@@ -1,6 +1,7 @@
 const fs = require("fs/promises");
 const express = require("express");
 const cors = require("cors");
+const http = require("http");
 // const MongoClient = require('mongodb').MongoClient
 
 const options = {
@@ -14,7 +15,10 @@ const options = {
 // const cors=require("cors");
 
 const app = express();
-const router = express.Router();
+// const router = express.Router();
+const server = http.createServer(app);
+
+const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
@@ -29,4 +33,4 @@ app.post("/user-input", async (req, res) => {
   res.json(input);
 });
 
-app.listen(3000, () => console.log("running"));
+server.listen(port, () => console.log("running"));
