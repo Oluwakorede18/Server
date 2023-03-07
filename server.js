@@ -1,21 +1,13 @@
 const express = require("express");
 const cors = require("cors");
-
 const http = require("http");
-// import http from "http";
-// import options from "./nhsKey.js";
 const options = require("./nhsKey");
-// import historySchema from "./mongo-schema/historySchema.js";
 const historySchema = require("./mongo-schema/historySchema");
-// import conn from "./mongodbConnect.js";
 const conn = require("./mongodbConnect");
-// const fetch = require("fetch");
-// import fetch from "node-fetch";
-// import uri from "./mongoUri.js";
 const uri = require("./mongoUri");
 const mongoose = require("mongoose");
-// import mongoose from "mongoose";
 const fetch = require("node-fetch");
+
 const port = process.env.PORT || 3000;
 
 const app = express();
@@ -321,4 +313,8 @@ app.get("/history", async (req, res) => {
   getHistory();
 });
 
-server.listen(port, () => console.log("Server running at port ", port));
+server.listen(
+  port,
+  () => console.log("Server running at port ", port),
+  res.send("Welcome to my first ever live API")
+);
