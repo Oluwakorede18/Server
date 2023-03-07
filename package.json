@@ -5,7 +5,8 @@
     "fetch": "^1.1.0",
     "http": "^0.0.1-security",
     "mongodb": "^5.1.0",
-    "mongoose": "^7.0.1"
+    "mongoose": "^7.0.1",
+    "node-fetch": "^3.3.0"
   },
   "scripts": {
     "start": "node server.js"
