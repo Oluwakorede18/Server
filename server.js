@@ -312,9 +312,8 @@ app.get("/history", async (req, res) => {
 
   getHistory();
 });
+app.get("", (req, res) => {
+  res.send("Welcome to my first ever live API");
+});
 
-server.listen(
-  port,
-  () => console.log("Server running at port ", port),
-  res.send("Welcome to my first ever live API")
-);
+server.listen(port, () => console.log("Server running at port ", port));
