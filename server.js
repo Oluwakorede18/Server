@@ -5,8 +5,8 @@ const http = require("http");
 const options = require("./nhsKey");
 const historySchema = require("./mongo-schema/historySchema");
 const conn = require("./mongodbConnect");
-// const fetch = require("node-fetch");
-import fetch from "node-fetch";
+const fetch = require("fetch");
+// import fetch from "node-fetch";
 const uri = require("./mongoUri");
 const mongoose = require("mongoose");
 
