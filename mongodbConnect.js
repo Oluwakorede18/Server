@@ -1,5 +1,6 @@
 const { MongoClient } = require("mongodb");
 const uri = require("./mongoUri");
+// import uri from "./mongoUri";
 
 const client = new MongoClient(uri);
 const db_name = "Medical_Terms";
@@ -17,6 +18,12 @@ const connectToDatabse = async () => {
     console.error(`error ${err}`);
   }
 };
+// export default { connectToDatabse,
+//     client,
+//     termsCollection,
+//     historiesCollection,
+
+// };
 
 module.exports = {
   connectToDatabse,
