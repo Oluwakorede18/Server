@@ -51,13 +51,15 @@ app.post("/alphabetically", async (req, res) => {
 app.post("/meaning", async (req, res) => {
   let apiWord;
   const value = req.body.term;
+  let searchedTerm;
   const dbConnect = async (value) => {
-    const documentToFind = { term: value };
+    const documentToFind = { term: value.toLowerCase() };
     try {
       await conn.connectToDatabse();
 
       let result = await conn.termsCollection.findOne(documentToFind);
       apiWord = result.apiLink;
+      searchedTerm = result.realWord;
     } catch (err) {
       console.error(`error ${err}`);
     } finally {
@@ -98,7 +100,7 @@ app.post("/meaning", async (req, res) => {
       const data = await response.json();
 
       const content = new historySchema({
-        term: value,
+        term: searchedTerm,
         url: data.url,
         description: data.description,
         date: new Date(),
