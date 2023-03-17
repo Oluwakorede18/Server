@@ -36,7 +36,7 @@ app.post("/alphabetically", async (req, res) => {
     let information = data.significantLink;
 
     information.forEach((element) => {
-      terms.push(element.name);
+      terms.push({ name: element.name, desc: element.description });
     });
     res.send(terms);
   } catch (error) {
@@ -45,7 +45,7 @@ app.post("/alphabetically", async (req, res) => {
         "Sorry, we could not perform this operation because of a problem with your internet connection. Please check your internet connection and try again",
     };
 
-    res.json(errorMsg);
+    res.send(errorMsg);
   }
 });
 app.post("/meaning", async (req, res) => {
@@ -190,67 +190,80 @@ app.post("/meaning", async (req, res) => {
   }
 });
 app.post("/info", async (req, res) => {
-  const url = req.body.url;
-  const response = await fetch(url, options);
-  const data = await response.json();
+  try {
+    const url = req.body.url;
+    const response = await fetch(url, options);
+    const data = await response.json();
 
-  let meaning = {};
-  let details = [];
-  let links = [];
+    let meaning = {};
+    let details = [];
+    let links = [];
 
-  let info = data.mainEntityOfPage;
-  let linkInfo = data.relatedLink;
+    let info = data.mainEntityOfPage;
+    let linkInfo = data.relatedLink;
 
-  linkInfo.forEach((e) => {
-    links.push({
-      name: e.name,
-      url: e.url,
+    let count = 0;
+    linkInfo.forEach((e) => {
+      links.push({
+        id: count,
+        name: e.name,
+        url: e.url,
+      });
+      count++;
     });
-  });
-  //Loops through the main entity of page array
-  info.forEach((e) => {
-    let pageInfo = e.hasPart;
-    pageInfo.forEach((element) => {
-      let empty = "";
-      let undefined = "undefined";
-      //Loops through details in the second mainEntity array
-      if (
-        empty.localeCompare(element.headline) == 0 ||
-        undefined.localeCompare(element.headline) == 0
-      ) {
+
+    //Loops through the main entity of page array
+    info.forEach((e) => {
+      let pageInfo = e.hasPart;
+      pageInfo.forEach((element) => {
+        let empty = "";
+        let undefined = "undefined";
+        //Loops through details in the second mainEntity array
         if (
-          empty.localeCompare(element.text) != 0 &&
-          undefined.localeCompare(element.text) != 0
+          empty.localeCompare(element.headline) == 0 ||
+          undefined.localeCompare(element.headline) == 0
         ) {
-          let checkText = element.text;
-          let checked = checkText.indexOf("src");
-          if (checked == -1) {
-            details.push({
-              text: element.text,
-            });
+          if (
+            empty.localeCompare(element.text) != 0 &&
+            undefined.localeCompare(element.text) != 0
+          ) {
+            let checkText = element.text;
+            let checked = checkText.indexOf("src");
+            if (checked == -1) {
+              details.push({
+                text: element.text,
+              });
+            }
+          }
+        } else {
+          if (
+            empty.localeCompare(element.text) != 0 &&
+            undefined.localeCompare(element.text) != 0
+          ) {
+            let checkText = element.text;
+            let checked = checkText.indexOf("src");
+            if (checked == -1) {
+              // console.log(element.text);
+              details.push({
+                headline: element.headline,
+                text: element.text,
+              });
+            }
           }
         }
-      } else {
-        if (
-          empty.localeCompare(element.text) != 0 &&
-          undefined.localeCompare(element.text) != 0
-        ) {
-          let checkText = element.text;
-          let checked = checkText.indexOf("src");
-          if (checked == -1) {
-            // console.log(element.text);
-            details.push({
-              headline: element.headline,
-              text: element.text,
-            });
-          }
-        }
-      }
+      });
     });
-  });
 
-  meaning = { links, details };
-  res.json(meaning);
+    meaning = { links, details };
+    res.json(meaning);
+  } catch (err) {
+    let errorMsg = {
+      error:
+        "Oops, we are unable to perform this operation at this time. Kindly try again later",
+    };
+
+    res.send(errorMsg);
+  }
 });
 app.get("/history", async (req, res) => {
   var data = [];
