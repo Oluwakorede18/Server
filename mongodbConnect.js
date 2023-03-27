@@ -6,9 +6,11 @@ const client = new MongoClient(uri);
 const db_name = "Medical_Terms";
 const term_collection = "terms";
 const history_collection = "histories";
+const details_collection = "details";
 
 const termsCollection = client.db(db_name).collection(term_collection);
 const historiesCollection = client.db(db_name).collection(history_collection);
+const detailsCollection = client.db(db_name).collection(details_collection);
 
 const connectToDatabse = async () => {
   try {
@@ -30,4 +32,5 @@ module.exports = {
   client,
   termsCollection,
   historiesCollection,
+  detailsCollection,
 };

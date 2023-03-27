@@ -91,11 +91,11 @@ app.post("/meaning", async (req, res) => {
         `https://api.nhs.uk/conditions/${apiWord}`,
         options
       );
-      if (response.status >= 400 && response.status < 600) {
-        throw new Error(
-          "Sorry, we could not find the word you are looking for in our dictionary. Please check your spelling or try searching for a different word."
-        );
-      }
+      // if (response.status >= 400 && response.status < 600) {
+      //   throw new Error(
+      //     "Sorry, we could not find the word you are looking for in our dictionary. Please check your spelling or try searching for a different word."
+      //   );
+      // }
       console.log(response.status);
       const data = await response.json();
 
@@ -111,58 +111,78 @@ app.post("/meaning", async (req, res) => {
       let details = [];
       let links = [];
 
-      let info = data.mainEntityOfPage;
-      let linkInfo = data.relatedLink;
+      let info = await data.mainEntityOfPage;
+      // console.log(JSON.stringify(info));
 
-      let count = 0;
-      linkInfo.forEach((e) => {
-        links.push({
-          id: count,
-          name: e.name,
-          url: e.url,
+      if (data.relatedLink) {
+        let linkInfo = data.relatedLink;
+
+        let count = 0;
+        linkInfo.forEach((e) => {
+          links.push({
+            id: count,
+            name: e.name,
+            url: e.url,
+          });
+          count++;
         });
-        count++;
-      });
+      }
 
       //Loops through the main entity of page array
+
       info.forEach((e) => {
-        let pageInfo = e.hasPart;
-        pageInfo.forEach((element) => {
-          let empty = "";
-          let undefined = "undefined";
-          //Loops through details in the second mainEntity array
-          if (
-            empty.localeCompare(element.headline) == 0 ||
-            undefined.localeCompare(element.headline) == 0
-          ) {
+        if (e.hasPart) {
+          let pageInfo = e.hasPart;
+          pageInfo.forEach((element) => {
+            let empty = "";
+            let undefined = "undefined";
+            //Loops through details in the second mainEntity array
             if (
-              empty.localeCompare(element.text) != 0 &&
-              undefined.localeCompare(element.text) != 0
+              empty.localeCompare(element.headline) == 0 ||
+              undefined.localeCompare(element.headline) == 0
             ) {
-              let checkText = element.text;
-              let checked = checkText.indexOf("src");
-              if (checked == -1) {
-                details.push({
-                  text: element.text,
-                });
+              if (
+                empty.localeCompare(element.text) != 0 &&
+                undefined.localeCompare(element.text) != 0
+              ) {
+                let checkText = element.text;
+                let checked = checkText.indexOf("src");
+                if (checked == -1) {
+                  details.push({
+                    text: element.text,
+                  });
+                }
+              }
+            } else {
+              if (
+                empty.localeCompare(element.text) != 0 &&
+                undefined.localeCompare(element.text) != 0
+              ) {
+                let checkText = element.text;
+                let checked = checkText.indexOf("src");
+                if (checked == -1) {
+                  details.push({
+                    headline: element.headline,
+                    text: element.text,
+                  });
+                }
               }
             }
-          } else {
-            if (
-              empty.localeCompare(element.text) != 0 &&
-              undefined.localeCompare(element.text) != 0
-            ) {
-              let checkText = element.text;
-              let checked = checkText.indexOf("src");
-              if (checked == -1) {
-                details.push({
-                  headline: element.headline,
-                  text: element.text,
-                });
-              }
-            }
-          }
-        });
+          });
+        } else {
+          // console.log(e.mainEntityOfPage);
+          let linkInfo = e.mainEntityOfPage;
+          console.log(linkInfo);
+          let count = 0;
+          linkInfo.forEach((element) => {
+            links.push({
+              id: count,
+              name: element.headline,
+              url: element.url,
+            });
+            count++;
+          });
+        }
       });
 
       meaning = { links, details };
@@ -171,7 +191,7 @@ app.post("/meaning", async (req, res) => {
       // console.log(
       //   "No results found, check spelling or try to another search term."
       // );
-      // console.log(err)
+      console.log(err);
       let errorMsg = {
         error:
           "Sorry, we could not find the word you are looking for in our dictionary. Please check your spelling or try searching for a different word.",
