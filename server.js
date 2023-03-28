@@ -7,6 +7,7 @@ const conn = require("./mongodbConnect");
 const uri = require("./mongoUri");
 const mongoose = require("mongoose");
 const fetch = require("node-fetch");
+const { link } = require("fs");
 
 const port = process.env.PORT || 3000;
 
@@ -98,6 +99,8 @@ app.post("/meaning", async (req, res) => {
       // }
       console.log(response.status);
       const data = await response.json();
+      let initialUrl = `https://api.nhs.uk/conditions/${apiWord}/`;
+      let name = data.name;
 
       const content = new historySchema({
         term: searchedTerm,
@@ -111,7 +114,7 @@ app.post("/meaning", async (req, res) => {
       let details = [];
       let links = [];
 
-      let info = await data.mainEntityOfPage;
+      let info = data.mainEntityOfPage;
       // console.log(JSON.stringify(info));
 
       if (data.relatedLink) {
@@ -119,12 +122,14 @@ app.post("/meaning", async (req, res) => {
 
         let count = 0;
         linkInfo.forEach((e) => {
-          links.push({
-            id: count,
-            name: e.name,
-            url: e.url,
-          });
-          count++;
+          if (e.url != initialUrl) {
+            links.push({
+              id: count,
+              name: e.name,
+              url: e.url,
+            });
+            count++;
+          }
         });
       }
 
@@ -184,8 +189,10 @@ app.post("/meaning", async (req, res) => {
           });
         }
       });
+      // console.log(links[0].url);
+      // console.log(initialUrl);
 
-      meaning = { links, details };
+      meaning = { name, apiWord, links, details };
       res.json(meaning);
     } catch (err) {
       // console.log(
@@ -218,63 +225,91 @@ app.post("/info", async (req, res) => {
     let meaning = {};
     let details = [];
     let links = [];
+    let name = data.about.name;
 
+    var link = url.substring("/", url.lastIndexOf("/"));
+    var linkDelete = link.substring("/", link.lastIndexOf("/"));
+
+    // console.log(`${linkDelete}/`);
+
+    let initialUrl = `${linkDelete}/`;
     let info = data.mainEntityOfPage;
     let linkInfo = data.relatedLink;
 
-    let count = 0;
-    linkInfo.forEach((e) => {
-      links.push({
-        id: count,
-        name: e.name,
-        url: e.url,
+    if (data.relatedLink) {
+      let linkInfo = data.relatedLink;
+
+      let count = 0;
+      linkInfo.forEach((e) => {
+        if (e.url != initialUrl) {
+          links.push({
+            id: count,
+            name: e.name,
+            url: e.url,
+          });
+          count++;
+        }
       });
-      count++;
-    });
+    }
 
     //Loops through the main entity of page array
     info.forEach((e) => {
-      let pageInfo = e.hasPart;
-      pageInfo.forEach((element) => {
-        let empty = "";
-        let undefined = "undefined";
-        //Loops through details in the second mainEntity array
-        if (
-          empty.localeCompare(element.headline) == 0 ||
-          undefined.localeCompare(element.headline) == 0
-        ) {
+      if (e.hasPart) {
+        let pageInfo = e.hasPart;
+        pageInfo.forEach((element) => {
+          let empty = "";
+          let undefined = "undefined";
+          //Loops through details in the second mainEntity array
           if (
-            empty.localeCompare(element.text) != 0 &&
-            undefined.localeCompare(element.text) != 0
+            empty.localeCompare(element.headline) == 0 ||
+            undefined.localeCompare(element.headline) == 0
           ) {
-            let checkText = element.text;
-            let checked = checkText.indexOf("src");
-            if (checked == -1) {
-              details.push({
-                text: element.text,
-              });
+            if (
+              empty.localeCompare(element.text) != 0 &&
+              undefined.localeCompare(element.text) != 0
+            ) {
+              let checkText = element.text;
+              let checked = checkText.indexOf("src");
+              if (checked == -1) {
+                details.push({
+                  text: element.text,
+                });
+              }
+            }
+          } else {
+            if (
+              empty.localeCompare(element.text) != 0 &&
+              undefined.localeCompare(element.text) != 0
+            ) {
+              let checkText = element.text;
+              let checked = checkText.indexOf("src");
+              if (checked == -1) {
+                // console.log(element.text);
+                details.push({
+                  headline: element.headline,
+                  text: element.text,
+                });
+              }
             }
           }
-        } else {
-          if (
-            empty.localeCompare(element.text) != 0 &&
-            undefined.localeCompare(element.text) != 0
-          ) {
-            let checkText = element.text;
-            let checked = checkText.indexOf("src");
-            if (checked == -1) {
-              // console.log(element.text);
-              details.push({
-                headline: element.headline,
-                text: element.text,
-              });
-            }
-          }
-        }
-      });
+        });
+      } else {
+        // console.log(e.mainEntityOfPage);
+        let linkInfo = e.mainEntityOfPage;
+
+        let count = 0;
+        linkInfo.forEach((element) => {
+          links.push({
+            id: count,
+            name: element.headline,
+            url: element.url,
+          });
+          count++;
+        });
+      }
     });
 
-    meaning = { links, details };
+    meaning = { name, links, details };
     res.json(meaning);
   } catch (err) {
     let errorMsg = {
@@ -283,6 +318,7 @@ app.post("/info", async (req, res) => {
     };
 
     res.send(errorMsg);
+    console.log(err);
   }
 });
 app.get("/history", async (req, res) => {
