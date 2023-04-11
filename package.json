@@ -6,9 +6,10 @@
     "http": "^0.0.1-security",
     "mongodb": "^5.1.0",
     "mongoose": "^7.0.1",
-    "node-fetch": "^2.6.9"
+    "node-fetch": "^2.6.9",
+    "nodemon": "^2.0.22"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "nodemon server.js"
   }
 }

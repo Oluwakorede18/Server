@@ -321,6 +321,134 @@ app.post("/info", async (req, res) => {
     console.log(err);
   }
 });
+app.post("/details", async (req, res) => {
+  let apiWord = req.body.term;
+
+  try {
+    mongoose.connect(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    getWordInfo();
+  } catch (err) {
+    res.send(err);
+    error = {
+      error:
+        "Sorry, we could not perform this operation because of a problem with your internet connection. Please check your internet connection and try again.t",
+    };
+  }
+
+  async function getWordInfo() {
+    try {
+      const response = await fetch(
+        `https://api.nhs.uk/conditions/${apiWord}`,
+        options
+      );
+      // if (response.status >= 400 && response.status < 600) {
+      //   throw new Error(
+      //     "Sorry, we could not find the word you are looking for in our dictionary. Please check your spelling or try searching for a different word."
+      //   );
+      // }
+      console.log(response.status);
+      const data = await response.json();
+      let initialUrl = `https://api.nhs.uk/conditions/${apiWord}/`;
+      let name = data.name;
+
+      let meaning = {};
+      let details = [];
+      let links = [];
+
+      let info = data.mainEntityOfPage;
+      // console.log(JSON.stringify(info));
+
+      if (data.relatedLink) {
+        let linkInfo = data.relatedLink;
+
+        let count = 0;
+        linkInfo.forEach((e) => {
+          if (e.url != initialUrl) {
+            links.push({
+              id: count,
+              name: e.name,
+              url: e.url,
+            });
+            count++;
+          }
+        });
+      }
+
+      //Loops through the main entity of page array
+
+      info.forEach((e) => {
+        if (e.hasPart) {
+          let pageInfo = e.hasPart;
+          pageInfo.forEach((element) => {
+            let empty = "";
+            let undefined = "undefined";
+            //Loops through details in the second mainEntity array
+            if (
+              empty.localeCompare(element.headline) == 0 ||
+              undefined.localeCompare(element.headline) == 0
+            ) {
+              if (
+                empty.localeCompare(element.text) != 0 &&
+                undefined.localeCompare(element.text) != 0
+              ) {
+                let checkText = element.text;
+                let checked = checkText.indexOf("src");
+                if (checked == -1) {
+                  details.push({
+                    text: element.text,
+                  });
+                }
+              }
+            } else {
+              if (
+                empty.localeCompare(element.text) != 0 &&
+                undefined.localeCompare(element.text) != 0
+              ) {
+                let checkText = element.text;
+                let checked = checkText.indexOf("src");
+                if (checked == -1) {
+                  details.push({
+                    headline: element.headline,
+                    text: element.text,
+                  });
+                }
+              }
+            }
+          });
+        } else {
+          let linkInfo = e.mainEntityOfPage;
+          console.log(linkInfo);
+          let count = 0;
+          linkInfo.forEach((element) => {
+            links.push({
+              id: count,
+              name: element.headline,
+              url: element.url,
+            });
+            count++;
+          });
+        }
+      });
+      meaning = { name, apiWord, links, details };
+      res.json(meaning);
+      // console.log("pop");
+    } catch (err) {
+      // console.log(
+      //   "No results found, check spelling or try to another search term."
+      // );
+      console.log(err);
+      let errorMsg = {
+        error:
+          "Sorry, we could not find the word you are looking for in our dictionary. Please check your spelling or try searching for a different word.",
+      };
+
+      res.json(errorMsg);
+    }
+  }
+});
 app.get("/history", async (req, res) => {
   var data = [];
   let historyUnsorted = [];
@@ -387,4 +515,76 @@ app.get("", (req, res) => {
   res.send("Welcome to my first ever live API");
 });
 
+app.post("/word-info", async (req, res) => {
+  let apiWord;
+  let data;
+  const value = req.body.term;
+  const dbConnect = async (value) => {
+    const documentToFind = { term: value.toLowerCase() };
+
+    try {
+      await conn.connectToDatabse();
+      let result = await conn.termsCollection.findOne(documentToFind);
+      apiWord = result.apiLink;
+      const detailToFind = { apiWord };
+      data = await conn.detailsCollection.findOne(detailToFind);
+    } catch (err) {
+      console.error(`error ${err}`);
+    } finally {
+      conn.client.close();
+    }
+  };
+
+  try {
+    mongoose.connect(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    getWordInfo();
+  } catch (err) {
+    res.send(err);
+    error = {
+      error:
+        "Sorry, we could not perform this operation because of a problem with your internet connection. Please check your internet connection and try again.t",
+    };
+    // res.send(err);
+  }
+
+  async function getWordInfo() {
+    await dbConnect(value);
+    let apiWord = data.apiWord;
+
+    let info = data.details;
+
+    let details = info.details;
+    let links = info.links;
+    let name = info.name;
+
+    meaning = { name, apiWord, links, details };
+    res.json(meaning);
+  }
+});
+app.post('/subsection', async (req,res)=>{
+  let apiWord;
+  let data;
+  const value = req.body.term;
+
+  const dbConnect = async (value) => {
+    const documentToFind = { term: value.toLowerCase() };
+
+    try {
+      await conn.connectToDatabse();
+      let result = await conn.termsCollection.findOne(documentToFind);
+      apiWord = result.apiLink;
+      const detailToFind = { apiWord };
+      data = await conn.detailsCollection.findOne(detailToFind);
+    } catch (err) {
+      console.error(`error ${err}`);
+    } finally {
+      conn.client.close();
+    }
+  };
+
+  // res.send(value)
+})
 server.listen(port, () => console.log("Server running at port ", port));
