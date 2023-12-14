@@ -88,7 +88,6 @@ exports.getConditionsByLetter = async (letter) => {
       .find({ tag: letter })
       .select({ _id: 0 });
 
-      console.log(conditions)
     return [true, conditions];
   } catch (error) {
     console.log(error);
