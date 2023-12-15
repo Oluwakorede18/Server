@@ -17,13 +17,15 @@ exports.addUserInput = async (body) => {
 exports.getGlossary = async () => {
   try {
     const terms = await glossaryModel.find().select({ _id: 0 });
-    return [true, terms];
+    const onlyTerms =  terms.map(e => e.term);
+    return [true, onlyTerms];
   } catch (error) {
     return [false, translateError(error) || "Unable to get input"];
   }
 };
 exports.defineTerm = async (term) => {
   try {
+    console.log(term);
     // const { term } = body;
     if(term === 'x ray'){
       term = "x-ray"
